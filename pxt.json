@@ -8,7 +8,10 @@
         "main.ts",
         "README.md",
         "assets.json",
-        "engine.ts"
+        "engine.ts",
+        "images.g.jres",
+        "images.g.ts",
+        "assets.ts"
     ],
     "testFiles": [
         "test.ts"
@@ -21,5 +24,23 @@
         "arcade"
     ],
     "preferredEditor": "tsprj",
-    "languageRestriction": "javascript-only"
+    "languageRestriction": "javascript-only",
+    "palette": [
+        "#ff00ff",
+        "#5c596f",
+        "#a59ab6",
+        "#f4f0f4",
+        "#703f30",
+        "#d5555f",
+        "#ff95cf",
+        "#d7772d",
+        "#f3c775",
+        "#ffd8c3",
+        "#186444",
+        "#7ca230",
+        "#2b51a7",
+        "#169ac8",
+        "#81d5d7",
+        "#222428"
+    ]
 }

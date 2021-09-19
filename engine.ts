@@ -115,19 +115,40 @@ function draw(dst: Image) {
         if (drawEnd >= h) drawEnd = h - 1;
 
         //choose wall color
-        let color;
-        switch (map[mapY * mapWidth + mapX]) {
-            case 1: color = 2; break; //red
-            case 2: color = 3; break; //green
-            case 3: color = 4; break; //blue
-            case 4: color = 5; break; //white
-            default: color = 6; break; //yellow
+        const texNum = map[mapY * mapWidth + mapX];
+        let texture: Image;
+
+        switch (texNum) {
+            default:
+                texture = projectImages.greyStone;
+                break;
         }
 
-        //give x and y sides different brightness
-        if (side == 1) { color = color / 2; }
+        let wallX;
+        if(side == 0) {
+            wallX = posY + perpWallDist * rayDirY;
+        } else {
+            wallX = posX + perpWallDist * rayDirX;
+        }
 
-        //draw the pixels of the stripe as a vertical line
-        dst.drawLine(x, drawStart, x, drawEnd, color);
+        wallX -= Math.floor(wallX);
+
+        let texX = Math.floor(wallX * texture.width);
+        if(side == 0 && rayDirX > 0) {
+            texX = texture.width - texX - 1;
+        }
+        if(side == 1 && rayDirY < 0) {
+            texX = texture.width - texX - 1;
+        }
+
+        const step = 1.0 * texture.height / lineHeight;
+        let texPos = (drawStart - h / 2 + lineHeight / 2) * step;
+
+        for(let y = drawStart; y < drawEnd; y++) {
+            const texY = Math.floor(texPos);
+            texPos += step;
+            const color = texture.getPixel(texX, texY);
+            dst.setPixel(x, y, color);
+        }
     }
 }

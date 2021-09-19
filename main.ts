@@ -3,6 +3,8 @@ const background = image.create(
     screen.height
 );
 
+image.setPalette(palettes.raycasthex);
+
 let lastFrame;
 let thisFrame = game.runtime();
 
