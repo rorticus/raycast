@@ -36,9 +36,9 @@ let time = 0; //time of current frame
 let oldTime = 0; //time of previous frame
 
 // Add your code here
-function draw(dst: Image) {
-    const w = dst.width;
-    const h = dst.height;
+function draw() {
+    const w = screen.width;
+    const h = screen.height;
 
     for(let x = 0; x < w; x++) {
         //calculate ray position and direction
@@ -110,9 +110,6 @@ function draw(dst: Image) {
 
         //calculate lowest and highest pixel to fill in current stripe
         let drawStart = -lineHeight / 2 + h / 2;
-        if (drawStart < 0) drawStart = 0;
-        let drawEnd = lineHeight / 2 + h / 2;
-        if (drawEnd >= h) drawEnd = h - 1;
 
         //choose wall color
         const texNum = map[mapY * mapWidth + mapX];
@@ -141,14 +138,6 @@ function draw(dst: Image) {
             texX = texture.width - texX - 1;
         }
 
-        const step = 1.0 * texture.height / lineHeight;
-        let texPos = (drawStart - h / 2 + lineHeight / 2) * step;
-
-        for(let y = drawStart; y < drawEnd; y++) {
-            const texY = Math.floor(texPos);
-            texPos += step;
-            const color = texture.getPixel(texX, texY);
-            dst.setPixel(x, y, color);
-        }
+        screen.blitRow(x, drawStart, texture, texX, lineHeight);
     }
 }

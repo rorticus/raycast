@@ -1,8 +1,3 @@
-const background = image.create(
-    screen.width,
-    screen.height
-);
-
 image.setPalette(palettes.raycasthex);
 
 let lastFrame;
@@ -12,9 +7,6 @@ game.onUpdate(() => {
     lastFrame = thisFrame;
     thisFrame = game.runtime();
     const frameTime = (thisFrame - lastFrame) / 1000.0; //frameTime is the time this frame has taken, in seconds
-
-    background.fillRect(0, 0, background.width, background.height, 0);
-    draw(background);
 
     //speed modifiers
     const moveSpeed = frameTime * 5.0; //the constant value is in squares/second
@@ -61,4 +53,6 @@ game.onUpdate(() => {
     }
 });
 
-scene.setBackgroundImage(background);
+game.onPaint(() => {
+    draw();
+});
