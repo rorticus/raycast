@@ -40,6 +40,8 @@ function draw() {
     const w = screen.width;
     const h = screen.height;
 
+    screen.fillRect(0, h / 2, w, h / 2, 2);
+
     for(let x = 0; x < w; x++) {
         //calculate ray position and direction
         let cameraX = 2 * x / w - 1; //x-coordinate in camera space
@@ -106,10 +108,11 @@ function draw() {
         else perpWallDist = (mapY - posY + (1 - stepY) / 2) / rayDirY;
 
         //Calculate height of line to draw on screen
-        let lineHeight = Math.floor(h / perpWallDist);
+        const lineHeight = Math.floor(h / perpWallDist);
 
         //calculate lowest and highest pixel to fill in current stripe
-        let drawStart = -lineHeight / 2 + h / 2;
+        const drawStart = -lineHeight / 2 + h / 2;
+        const drawEnd = drawStart + lineHeight;
 
         //choose wall color
         const texNum = map[mapY * mapWidth + mapX];
@@ -139,5 +142,53 @@ function draw() {
         }
 
         screen.blitRow(x, drawStart, texture, texX, lineHeight);
+
+        // region floor casting
+
+        //FLOOR CASTING (vertical version, directly after drawing the vertical wall stripe for the current x)
+        // let floorXWall, floorYWall; //x, y position of the floor texel at the bottom of the wall
+
+        // //4 different wall directions possible
+        // if (side == 0 && rayDirX > 0) {
+        //     floorXWall = mapX;
+        //     floorYWall = mapY + wallX;
+        // }
+        // else if (side == 0 && rayDirX < 0) {
+        //     floorXWall = mapX + 1.0;
+        //     floorYWall = mapY + wallX;
+        // }
+        // else if (side == 1 && rayDirY > 0) {
+        //     floorXWall = mapX + wallX;
+        //     floorYWall = mapY;
+        // }
+        // else {
+        //     floorXWall = mapX + wallX;
+        //     floorYWall = mapY + 1.0;
+        // }
+
+        // let distWall, distPlayer, currentDist;
+
+        // distWall = perpWallDist;
+
+        //draw the floor from drawEnd to the bottom of the screen
+        // for (let y = drawEnd + 1; y < h; y++)
+        // {
+            // currentDist = h / (2.0 * y - h); //you could make a small lookup table for this instead
+
+            // const weight = (currentDist) / (distWall);
+
+            // const currentFloorX = weight * floorXWall + (1.0 - weight) * posX;
+            // const currentFloorY = weight * floorYWall + (1.0 - weight) * posY;
+
+            // let floorTexX, floorTexY;
+            // floorTexX = Math.floor(currentFloorX * texture.width) % texture.width;
+            // floorTexY = Math.floor(currentFloorY * texture.height) % texture.height;
+
+            //floor
+            // screen.setPixel(x, y, 2);
+            // screen.setPixel(x, h - y, 1);
+        // }
+
+        // endregion
     }
 }
