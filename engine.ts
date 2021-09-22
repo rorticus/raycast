@@ -28,6 +28,20 @@ const map = [
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 ];
 
+interface CastSprite {
+    x: number;
+    y: number;
+    texture: Image;
+}
+
+const castSprites: CastSprite[] = [];
+
+castSprites.push({
+    x: 20.5, y: 11.5, texture: projectImages.greyStone
+});
+
+const zBuffer: number[] = [];
+
 let posX = 22, posY = 12;  //x and y start position
 let dirX = -1, dirY = 0; //initial direction vector
 let planeX = 0, planeY = 0.66; //the 2d raycaster version of camera plane
@@ -42,7 +56,7 @@ function draw() {
 
     screen.fillRect(0, h / 2, w, h / 2, 2);
 
-    for(let x = 0; x < w; x++) {
+    for (let x = 0; x < w; x++) {
         //calculate ray position and direction
         let cameraX = 2 * x / w - 1; //x-coordinate in camera space
         let rayDirX = dirX + planeX * cameraX;
@@ -125,7 +139,7 @@ function draw() {
         }
 
         let wallX;
-        if(side == 0) {
+        if (side == 0) {
             wallX = posY + perpWallDist * rayDirY;
         } else {
             wallX = posX + perpWallDist * rayDirX;
@@ -134,14 +148,16 @@ function draw() {
         wallX -= Math.floor(wallX);
 
         let texX = Math.floor(wallX * texture.width);
-        if(side == 0 && rayDirX > 0) {
+        if (side == 0 && rayDirX > 0) {
             texX = texture.width - texX - 1;
         }
-        if(side == 1 && rayDirY < 0) {
+        if (side == 1 && rayDirY < 0) {
             texX = texture.width - texX - 1;
         }
 
         screen.blitRow(x, drawStart, texture, texX, lineHeight);
+
+        zBuffer[x] = perpWallDist;
 
         // region floor casting
 
@@ -173,22 +189,67 @@ function draw() {
         //draw the floor from drawEnd to the bottom of the screen
         // for (let y = drawEnd + 1; y < h; y++)
         // {
-            // currentDist = h / (2.0 * y - h); //you could make a small lookup table for this instead
+        // currentDist = h / (2.0 * y - h); //you could make a small lookup table for this instead
 
-            // const weight = (currentDist) / (distWall);
+        // const weight = (currentDist) / (distWall);
 
-            // const currentFloorX = weight * floorXWall + (1.0 - weight) * posX;
-            // const currentFloorY = weight * floorYWall + (1.0 - weight) * posY;
+        // const currentFloorX = weight * floorXWall + (1.0 - weight) * posX;
+        // const currentFloorY = weight * floorYWall + (1.0 - weight) * posY;
 
-            // let floorTexX, floorTexY;
-            // floorTexX = Math.floor(currentFloorX * texture.width) % texture.width;
-            // floorTexY = Math.floor(currentFloorY * texture.height) % texture.height;
+        // let floorTexX, floorTexY;
+        // floorTexX = Math.floor(currentFloorX * texture.width) % texture.width;
+        // floorTexY = Math.floor(currentFloorY * texture.height) % texture.height;
 
-            //floor
-            // screen.setPixel(x, y, 2);
-            // screen.setPixel(x, h - y, 1);
+        //floor
+        // screen.setPixel(x, y, 2);
+        // screen.setPixel(x, h - y, 1);
         // }
 
         // endregion
     }
+
+    // region sprites
+    function dist(s: CastSprite) {
+        return (posX - s.x) * (posX - s.x) + (posY - s.y) * (posY - s.y);
+    }
+    castSprites.sort((a, b) => dist(a) < dist(b) ? 1 : -1);
+
+    for (let i = 0; i < castSprites.length; i++) {
+        const spriteX = castSprites[i].x - posX;
+        const spriteY = castSprites[i].y - posY;
+        const texture = projectImages.hamburger;//castSprites[i].texture;
+
+        const invDet = 1.0 / (planeX * dirY - dirX * planeY); //required for correct matrix multiplication
+
+        const transformX = invDet * (dirY * spriteX - dirX * spriteY);
+        const transformY = invDet * (-planeY * spriteX + planeX * spriteY); //this is actually the depth inside the screen, that what Z is in 3D
+
+        const spriteScreenX = Math.floor((w / 2) * (1 + transformX / transformY));
+
+        //calculate height of the sprite on screen
+        const spriteHeight = Math.abs(Math.floor(h / (transformY))); //using 'transformY' instead of the real distance prevents fisheye
+        //calculate lowest and highest pixel to fill in current stripe
+        let drawStartY = -spriteHeight / 2 + h / 2;
+
+        //calculate width of the sprite
+        const spriteWidth = Math.abs(Math.floor(h / (transformY)));
+        let drawStartX = Math.floor(-spriteWidth / 2 + spriteScreenX);
+        if (drawStartX < 0) drawStartX = 0;
+        let drawEndX = Math.floor(spriteWidth / 2 + spriteScreenX);
+        if (drawEndX >= w) drawEndX = w - 1;
+
+        //loop through every vertical stripe of the sprite on screen
+        for (let stripe = drawStartX; stripe < drawEndX; stripe++) {
+            const texX = Math.floor((stripe - (-spriteWidth / 2 + spriteScreenX)) * texture.width / spriteWidth);
+            //     //the conditions in the if are:
+            //     //1) it's in front of camera plane so you don't see things behind you
+            //     //2) it's on the screen (left)
+            //     //3) it's on the screen (right)
+            //     //4) ZBuffer, with perpendicular distance
+            if (transformY > 0 && stripe > 0 && stripe < w && transformY < zBuffer[stripe]) {
+                screen.blitRow(stripe, drawStartY, texture, texX, spriteHeight);
+            }
+        }
+    }
+    // endregion
 }
