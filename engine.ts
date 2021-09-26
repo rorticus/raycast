@@ -92,53 +92,7 @@ function draw() {
         // drawFloorSlice(x, w, h, results);
     }
 
-    // region sprites
-    function dist(s: CastSprite) {
-        return (posX - s.x) * (posX - s.x) + (posY - s.y) * (posY - s.y);
-    }
-    castSprites.sort((a, b) => dist(a) < dist(b) ? 1 : -1);
-
-    for (let i = 0; i < castSprites.length; i++) {
-        const spriteX = castSprites[i].x - posX;
-        const spriteY = castSprites[i].y - posY;
-        const texture = projectImages.hamburger;//castSprites[i].texture;
-
-        const invDet = 1.0 / (planeX * dirY - dirX * planeY); //required for correct matrix multiplication
-
-        const transformX = invDet * (dirY * spriteX - dirX * spriteY);
-        const transformY = invDet * (-planeY * spriteX + planeX * spriteY); //this is actually the depth inside the screen, that what Z is in 3D
-
-        const spriteScreenX = Math.floor((w / 2) * (1 + transformX / transformY));
-
-        //calculate width of the sprite
-        const spriteWidth = Math.abs(Math.floor(texture.data.length / (transformY)));
-        let drawStartX = Math.floor(-spriteWidth / 2 + spriteScreenX);
-        if (drawStartX < 0) drawStartX = 0;
-        let drawEndX = Math.floor(spriteWidth / 2 + spriteScreenX);
-        if (drawEndX >= w) drawEndX = w - 1;
-
-        //loop through every vertical stripe of the sprite on screen
-        for (let stripe = drawStartX; stripe < drawEndX; stripe++) {
-            const texX = Math.floor((stripe - (-spriteWidth / 2 + spriteScreenX)) * texture.data.length / spriteWidth);
-            //     //the conditions in the if are:
-            //     //1) it's in front of camera plane so you don't see things behind you
-            //     //2) it's on the screen (left)
-            //     //3) it's on the screen (right)
-            //     //4) ZBuffer, with perpendicular distance
-
-            if (texture.data[texX] && transformY > 0 && stripe > 0 && stripe < w && transformY < zBuffer[stripe]) {
-                const vMoveScreen = Math.floor(texture.offsets[texX] / transformY);
-
-                //calculate height of the sprite on screen
-                const spriteHeight = Math.abs(Math.floor(texture.heights[texX] / (transformY))); //using 'transformY' instead of the real distance prevents fisheye
-                //calculate lowest and highest pixel to fill in current stripe
-                let drawStartY = -spriteHeight / 2 + h / 2 + vMoveScreen;
-
-                screen.blitRow(stripe, drawStartY, texture.data[Math.floor(texX)], texX, spriteHeight);
-            }
-        }
-    }
-    // endregion
+    drawSprites(w, h);    
 }
 
 function calculateSlice(x: number, w: number, h: number, calcs: SliceCalculations) {
@@ -313,5 +267,50 @@ function drawFloorSlice(x: number, w: number, h: number, calcs: SliceCalculation
 
         // floor
         screen.setPixel(x, y, c);
+    }
+}
+
+function drawSprites(w: number, h: number) {
+    for (let i = 0; i < castSprites.length; i++) {
+        const spriteX = castSprites[i].x - posX;
+        const spriteY = castSprites[i].y - posY;
+        const texture = projectImages.hamburger;//castSprites[i].texture;
+
+        const invDet = 1.0 / (planeX * dirY - dirX * planeY); //required for correct matrix multiplication
+
+        const transformX = invDet * (dirY * spriteX - dirX * spriteY);
+        const transformY = invDet * (-planeY * spriteX + planeX * spriteY); //this is actually the depth inside the screen, that what Z is in 3D
+
+        const yOffset = 64 / transformY;
+
+        const spriteScreenX = Math.floor((w / 2) * (1 + transformX / transformY));
+
+        //calculate width of the sprite
+        const spriteWidth = Math.abs(Math.floor(texture.data.length / (transformY)));
+        let drawStartX = Math.floor(-spriteWidth / 2 + spriteScreenX);
+        if (drawStartX < 0) drawStartX = 0;
+        let drawEndX = Math.floor(spriteWidth / 2 + spriteScreenX);
+        if (drawEndX >= w) drawEndX = w - 1;
+
+        //loop through every vertical stripe of the sprite on screen
+        for (let stripe = drawStartX; stripe < drawEndX; stripe++) {
+            const texX = Math.floor((stripe - (-spriteWidth / 2 + spriteScreenX)) * texture.data.length / spriteWidth);
+            //     //the conditions in the if are:
+            //     //1) it's in front of camera plane so you don't see things behind you
+            //     //2) it's on the screen (left)
+            //     //3) it's on the screen (right)
+            //     //4) ZBuffer, with perpendicular distance
+            
+            if (texture.data[texX] && transformY > 0 && stripe > 0 && stripe < w && transformY < zBuffer[stripe]) {
+                const vMoveScreen = Math.floor(texture.offsets[texX] / transformY);
+
+                //calculate height of the sprite on screen
+                const spriteHeight = Math.abs(Math.floor(texture.heights[texX] / (transformY))); //using 'transformY' instead of the real distance prevents fisheye
+                //calculate lowest and highest pixel to fill in current stripe
+                let drawStartY = h / 2 + vMoveScreen + yOffset;
+
+                screen.blitRow(stripe, drawStartY, texture.data[Math.floor(texX)], texX, spriteHeight);
+            }
+        }
     }
 }
