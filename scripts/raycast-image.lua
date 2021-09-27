@@ -48,12 +48,21 @@ for x = 0, width - 1 do
 	else
 		-- construct the image data
 		columnOffsets[x + 1] = topOffset
-		columnHeights[x + 1] = height - topOffset - bottomOffset
+		columnHeights[x + 1] = height - topOffset - bottomOffset + 1
 		local str = ""
-		for y = topOffset, height - 1 - bottomOffset do
+		for y = topOffset, height - bottomOffset do
 			c = img:getPixel(x, y)
-			str = str .. string.format("%x\n", c)
+			str = str .. string.format("%x", c)
 		end
+
+		local rounded = math.fmod(string.len(str), 4)
+
+		if rounded > 0 then
+			for i = 0, 3 - rounded do
+				str = str .. "0"
+			end
+		end
+		
 		columnImageData[x + 1] = str
 	end
 
@@ -72,7 +81,7 @@ for x = 0, width - 1 do
 	if columnImageData[x + 1] == nil then
 		text = text .. "        null,\n"
 	else
-		text = text .. "        img`" .. columnImageData[x + 1] .. "`,\n"
+		text = text .. "        image.ofBuffer(hex`e401" .. string.format("%02x", columnHeights[x + 1]) .. "00" .. columnImageData[x + 1] .. "`),\n"
 	end
 end
 text = text .. "    ]"
