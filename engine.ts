@@ -274,7 +274,7 @@ function drawSprites(w: number, h: number) {
     for (let i = 0; i < castSprites.length; i++) {
         const spriteX = castSprites[i].x - posX;
         const spriteY = castSprites[i].y - posY;
-        const texture = projectImages.hamburger;//castSprites[i].texture;
+        const texture = projectImages.table;//castSprites[i].texture;
 
         const invDet = 1.0 / (planeX * dirY - dirX * planeY); //required for correct matrix multiplication
 
@@ -286,15 +286,15 @@ function drawSprites(w: number, h: number) {
         const spriteScreenX = Math.floor((w / 2) * (1 + transformX / transformY));
 
         //calculate width of the sprite
-        const spriteWidth = Math.abs(Math.floor(texture.data.length / (transformY)));
+        const spriteWidth = Math.abs(Math.floor(texture.data.length / transformY));
         let drawStartX = Math.floor(-spriteWidth / 2 + spriteScreenX);
         if (drawStartX < 0) drawStartX = 0;
         let drawEndX = Math.floor(spriteWidth / 2 + spriteScreenX);
         if (drawEndX >= w) drawEndX = w - 1;
 
         //loop through every vertical stripe of the sprite on screen
-        for (let stripe = drawStartX; stripe < drawEndX; stripe++) {
-            const texX = Math.floor((stripe - (-spriteWidth / 2 + spriteScreenX)) * texture.data.length / spriteWidth);
+        for (let stripe = drawStartX; stripe <= drawEndX; stripe++) {
+            const texX = Math.floor((stripe - (spriteScreenX - spriteWidth / 2)) * texture.data.length / spriteWidth);
             //     //the conditions in the if are:
             //     //1) it's in front of camera plane so you don't see things behind you
             //     //2) it's on the screen (left)
@@ -305,11 +305,19 @@ function drawSprites(w: number, h: number) {
                 const vMoveScreen = Math.floor(texture.offsets[texX] / transformY);
 
                 //calculate height of the sprite on screen
-                const spriteHeight = Math.abs(Math.floor(texture.heights[texX] / (transformY))); //using 'transformY' instead of the real distance prevents fisheye
+                const spriteHeight = Math.floor(texture.heights[texX] / transformY); //using 'transformY' instead of the real distance prevents fisheye
+
                 //calculate lowest and highest pixel to fill in current stripe
                 let drawStartY = h / 2 + vMoveScreen + yOffset;
 
-                screen.blitRow(stripe, drawStartY, texture.data[Math.floor(texX)], texX, spriteHeight);
+                const t = texture.data[texX];
+                
+                // for(let y = drawStartY; y <= drawStartY + spriteHeight; y++) {
+                //     screen.setPixel(stripe, y, 4);
+                // }
+
+                // screen.drawImage(t,stripe, drawStartY);
+                screen.blitRow(stripe, drawStartY, t, texX, spriteHeight);
             }
         }
     }
